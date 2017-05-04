@@ -1,20 +1,16 @@
 package com.softkiwi.algorithms.graphs;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 
-	private Map<KEY, T> verticies = new HashMap<KEY, T>(); // vertex mapper
+	private Map<KEY, T> vertices = new LinkedHashMap<KEY, T>(); // vertex mapper
 
-	private Map<KEY, ArrayList<KEY>> adjacencyList = new HashMap<KEY, ArrayList<KEY>>(); // outcoming connections
+	private Map<KEY, ArrayList<KEY>> adjacencyList = new LinkedHashMap<KEY, ArrayList<KEY>>(); // outgoing connections
 
-	private Map<KEY, ArrayList<KEY>> invertedAdjacencyList = new HashMap<KEY, ArrayList<KEY>>(); // incoming connections
+	private Map<KEY, ArrayList<KEY>> invertedAdjacencyList = new LinkedHashMap<KEY, ArrayList<KEY>>(); // incoming connections
 
-	private Map<KEY, Boolean> visited = new HashMap<KEY, Boolean>(); // visited nodes
+	private Map<KEY, Boolean> visited = new LinkedHashMap<KEY, Boolean>(); // visited nodes
 
 	private Queue<T> result = new LinkedList<T>(); // result for sorted nodes
 
@@ -22,8 +18,8 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 		for (T v : vertex) {
 			KEY id = v.getVertexId();
 
-			if (!verticies.containsKey(id)) {
-				verticies.put(id, v);
+			if (!vertices.containsKey(id)) {
+				vertices.put(id, v);
 				adjacencyList.put(id, new ArrayList<KEY>());
 				invertedAdjacencyList.put(id, new ArrayList<KEY>());
 			}
@@ -55,8 +51,13 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 		// nodes with no incoming edges
 		for (KEY n : invertedAdjacencyList.keySet()) {
 			if (invertedAdjacencyList.get(n).isEmpty()) {
-				visit(n);
+				visit(n, null, new HashSet<KEY>(), true);
 			}
+		}
+
+		if (result.size() != vertices.size()) {// We may have cycles.. i.e no independent node.. a -> b -> c -> a
+			throw new RuntimeException(
+					"Could Not Sore Graph..Check to make sure you do not have any cyclic dependencies");
 		}
 
 		return result;
@@ -73,14 +74,26 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 		return false;
 	}
 
-	private void visit(KEY id) {
-		if (!isVisited(id)) {
-			markAsVisited(id);
-			for (KEY m : adjacencyList.get(id)) {
-				visit(m);
+	private void visit(KEY fromId, KEY toId, Set<KEY> visited, boolean fromRoot) {
+		if (!isVisited(fromId)) {
+
+			System.out.println("Visiting [from:" + toId + " to:" + fromId + "] Parents: " + visited);
+
+			if (visited.contains(fromId)) {
+				throw new RuntimeException(
+						"cyclic graph found moving from [" + fromId + "->" + toId + "] parents = " + visited);
 			}
 
-			result.offer(verticies.get(id));
+			visited.add(fromId);
+
+			for (KEY _toId : adjacencyList.get(fromId)) {
+				Set<KEY> visitedChildren = fromRoot ? new HashSet<KEY>(Collections.singletonList(fromId)) : visited;
+				visit(_toId, fromId, visitedChildren, false);
+			}
+
+			markAsVisited(fromId);
+
+			result.offer(vertices.get(fromId));
 		}
 	}
 
@@ -117,10 +130,18 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 		sb.append("\n");
 		sb.append("Sorted:\n");
 		for (T head : result) {
-			sb.append(head.getVertexId() + ", ");
+			sb.append(head.getVertexId()).append(", ");
 		}
 		sb.append("\n");
 
+		return sb.toString();
+	}
+
+	public String sortString() {
+		StringBuilder sb = new StringBuilder();
+		for (T head : result) {
+			sb.append(head.getVertexId()).append(", ");
+		}
 		return sb.toString();
 	}
 }
