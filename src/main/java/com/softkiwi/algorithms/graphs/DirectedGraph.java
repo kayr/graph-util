@@ -28,8 +28,8 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 
 	public void addEdge(KEY from, KEY to) {
 		if (adjacencyList.containsKey(from) && adjacencyList.containsKey(to)) {
-			ArrayList<KEY> list = (ArrayList<KEY>) adjacencyList.get(from);
-			ArrayList<KEY> invertedList = (ArrayList<KEY>) invertedAdjacencyList.get(to);
+			ArrayList<KEY> list = adjacencyList.get(from);
+			ArrayList<KEY> invertedList = invertedAdjacencyList.get(to);
 
 			if (!list.contains(to)) {
 				if (!invertedList.contains(from)) {
