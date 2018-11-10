@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -46,7 +47,7 @@ public class DirectedGraphTest {
 		DefaultGraph<String> graph = new DefaultGraph<String>();
 
 		// add to graph
-		graph.addVertex(a, b, d, x, e, y);
+        graph.addVertex(a, b, d, c, x, e, y, f);
 
 		// connect nodes
 		graph.addEdge(b, a);
@@ -58,13 +59,45 @@ public class DirectedGraphTest {
 		// add cycle
 		graph.addEdge(x, e);
 		graph.addEdge(e, d);
-		graph.addEdge(d, b);
 		graph.addEdge(y, x);
+        graph.addEdge(a, y);
+
 
 		// sort nodes
 		assetThrowCycleException(graph);
 
-	}
+        //sort silently
+        Queue<Node<String>> nodes = graph.sort(false);
+
+
+        System.out.println(nodes);
+
+        assertEquals(8, nodes.size());
+
+
+    }
+
+    @Test
+    public void test_sampleOfficeHierachy() {
+        DefaultGraph<Integer> graph = new DefaultGraph<Integer>();
+
+        graph.addVertex(n(1), n(2), n(3), n(4), n(7), n(8), n(3), n(4), n(10), n(9));
+
+        graph.addEdge(1, 2).addEdge(2, 3).addEdge(2, 7)
+                .addEdge(2, 8).addEdge(8, 9).addEdge(9, 10)
+                .addEdge(1, 3).addEdge(3, 4)
+        .addEdge(1,1);
+
+        for (Integer v : graph.getVertices()) {
+            Set<Integer> parent = graph.getParent(v);
+            System.out.println(v + " : " + parent);
+        }
+
+    }
+
+    Node<Integer> n(int num) {
+        return new Node<Integer>(num);
+    }
 
 	@Test
 	public void test_ShouldSortTransitiveDependencies() {
@@ -145,6 +178,7 @@ public class DirectedGraphTest {
 			graph.sort();
 			fail("Should have throw cyclic exception");
 		} catch (Exception ex) {
+            System.out.println(ex.getMessage());
 			assertTrue("Should have throw cyclic exception", ex.getMessage().contains("cyclic"));
 		}
 	}

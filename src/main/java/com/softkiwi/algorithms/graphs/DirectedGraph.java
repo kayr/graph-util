@@ -2,74 +2,83 @@ package com.softkiwi.algorithms.graphs;
 
 import java.util.*;
 
-public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
+public abstract class DirectedGraph<K, T extends VertexData<K>> {
 
-	private Map<KEY, T> vertices = new LinkedHashMap<KEY, T>(); // vertex mapper
+    private Map<K, T> vertices = new LinkedHashMap<K, T>(); // vertex mapper
 
-	private Map<KEY, ArrayList<KEY>> adjacencyList = new LinkedHashMap<KEY, ArrayList<KEY>>(); // outgoing connections
+    private Map<K, ArrayList<K>> adjacencyList = new LinkedHashMap<K, ArrayList<K>>(); // outgoing connections
 
-	private Map<KEY, ArrayList<KEY>> invertedAdjacencyList = new LinkedHashMap<KEY, ArrayList<KEY>>(); // incoming connections
+    private Map<K, ArrayList<K>> invertedAdjacencyList = new LinkedHashMap<K, ArrayList<K>>(); // incoming connections
 
-	private Map<KEY, Boolean> visited = new LinkedHashMap<KEY, Boolean>(); // visited nodes
+    private Map<K, Boolean> visited = new LinkedHashMap<K, Boolean>(); // visited nodes
 
 	private Queue<T> result = new LinkedList<T>(); // result for sorted nodes
-	private Map<KEY, List<KEY>> parentList = new LinkedHashMap<KEY, List<KEY>>();
 
-	public void addVertex(T... vertex) {
+    public void addVertex(T... vertex) {
 		for (T v : vertex) {
-			KEY id = v.getVertexId();
+            K id = v.getVertexId();
 
 			if (!vertices.containsKey(id)) {
 				vertices.put(id, v);
-				adjacencyList.put(id, new ArrayList<KEY>());
-				invertedAdjacencyList.put(id, new ArrayList<KEY>());
+                adjacencyList.put(id, new ArrayList<K>());
+                invertedAdjacencyList.put(id, new ArrayList<K>());
 			}
 		}
 	}
 
-	public void addEdge(KEY from, KEY to) {
-		if (adjacencyList.containsKey(from) && adjacencyList.containsKey(to)) {
-			ArrayList<KEY> outgoingList = adjacencyList.get(from);
-			ArrayList<KEY> incomingList = invertedAdjacencyList.get(to);
+    public Set<K> getVertices() {
+        return vertices.keySet();
+    }
 
-			if (outgoingList.contains(to) || incomingList.contains(from)) {
-				return;
-			}
+    public DirectedGraph<K, T> addEdge(K from, K to) {
 
-			outgoingList.add(to);
-			incomingList.add(from);
-		}
-	}
+        if (!adjacencyList.containsKey(from)) throw new GraphException("Vertex not found[" + from + "]");
+
+
+        if (!adjacencyList.containsKey(to)) throw new GraphException("Vertex not found [" + to + "]");
+
+        ArrayList<K> outgoingList = adjacencyList.get(from);
+        ArrayList<K> incomingList = invertedAdjacencyList.get(to);
+
+        if (outgoingList.contains(to) || incomingList.contains(from)) {
+            return this;
+        }
+
+        outgoingList.add(to);
+        incomingList.add(from);
+
+        return this;
+    }
 
 	public void addEdge(T from, T to) {
 		addEdge(from.getVertexId(), to.getVertexId());
 	}
 
 
-	public Set<KEY> getParent(KEY key) {
+    public Set<K> getParent(K key) {
 
-		Set<KEY> result = new LinkedHashSet<KEY>();
+        Set<K> parentKeys = new LinkedHashSet<K>();
 
-		ArrayList<KEY> parents = invertedAdjacencyList.get(key);
+        ArrayList<K> parents = invertedAdjacencyList.get(key);
 
-		Deque<KEY> deque = new ArrayDeque<KEY>(parents);
+        Deque<K> deque = new ArrayDeque<K>(parents);
 
-		KEY pop = deque.poll();
-		while (pop != null) {
-			if (result.contains(pop)) {
-				pop = deque.poll();
+        K topKey = deque.poll();
+        while (topKey != null) {
+            if (parentKeys.contains(topKey)) {
+                topKey = deque.poll();
 			} else {
-				result.add(pop);
-				ArrayList<KEY> parentsOfParent = invertedAdjacencyList.get(pop);
-				for(KEY p :parentsOfParent) {
+                parentKeys.add(topKey);
+                ArrayList<K> parentsOfParent = invertedAdjacencyList.get(topKey);
+                for (K p : parentsOfParent) {
 					deque.addFirst(p);//add to the top so that we visit the follow this path next
 				}
-				pop = deque.poll();
+                topKey = deque.poll();
 			}
 
 		}
 
-		return result;
+        return parentKeys;
 	}
 
     public Queue<T> sort() {
@@ -81,16 +90,14 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 		result.clear();
 
 		// nodes with no incoming edges
-		for (KEY n : invertedAdjacencyList.keySet()) {
-			if (invertedAdjacencyList.get(n).isEmpty()) {
-                visit(n, null, new HashSet<KEY>(), true, failOnCycle);
-
-
+        for (Map.Entry<K, ArrayList<K>> n : invertedAdjacencyList.entrySet()) {
+            if (n.getValue().isEmpty()) {
+                visit(n.getKey(), null, new HashSet<K>(), true, failOnCycle);
 			}
 		}
 
 		if (failOnCycle && result.size() != vertices.size()) {// We may have cycles.. i.e no independent node.. a -> b -> c -> a
-			throw new RuntimeException(
+            throw new GraphException(
 					"Could Not Sort Graph..Check to make sure you do not have any cyclic dependencies");
 		}
 
@@ -98,26 +105,25 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 	}
 
 
-
-	private void markAsVisited(KEY id) {
+    private void markAsVisited(K id) {
 		visited.put(id, true);
 	}
 
-	private boolean isVisited(KEY id) {
+    private boolean isVisited(K id) {
 		if (visited.containsKey(id))
 			return visited.get(id);
 
 		return false;
 	}
 
-	private void visit(KEY fromId, KEY toId, Set<KEY> visited, boolean fromRoot, boolean failOnCycle) {
+    private void visit(K fromId, K toId, Set<K> visited, boolean fromRoot, boolean failOnCycle) {
 		if (!isVisited(fromId)) {
 
 			System.out.println("Visiting [from:" + toId + " to:" + fromId + "] Parents: " + visited);
 
 			if (visited.contains(fromId)) {
 				if (failOnCycle)
-					throw new RuntimeException(
+                    throw new GraphException(
 							"cyclic graph found moving from [" + fromId + "->" + toId + "] parents = " + visited);
 
 				return;
@@ -126,8 +132,8 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 
 			visited.add(fromId);
 
-			for (KEY _toId : adjacencyList.get(fromId)) {
-				Set<KEY> visitedChildren = fromRoot ? new HashSet<KEY>(Collections.singletonList(fromId)) : visited;
+            for (K _toId : adjacencyList.get(fromId)) {
+                Set<K> visitedChildren = fromRoot ? new HashSet<K>(Collections.singletonList(fromId)) : visited;
 				visit(_toId, fromId, visitedChildren, false, failOnCycle);
 			}
 
@@ -143,12 +149,12 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 
 		sb.append("adjacencyList:");
 		sb.append("\n");
-		for (KEY v : adjacencyList.keySet()) {
-			String x = v + " -> [";
-			for (KEY c : adjacencyList.get(v)) {
-				x += c + ", ";
+        for (Map.Entry<K, ArrayList<K>> v : adjacencyList.entrySet()) {
+            StringBuilder x = new StringBuilder().append(v.getKey()).append(" -> [");
+            for (K c : v.getValue()) {
+                x.append(c).append(", ");
 			}
-			x += "]";
+            x.append("]");
 			sb.append(x);
 			sb.append("\n");
 		}
@@ -158,12 +164,12 @@ public abstract class DirectedGraph<KEY, T extends VertexData<KEY>> {
 
 		sb.append("invertedAdjacencyList:");
 		sb.append("\n");
-		for (KEY v : invertedAdjacencyList.keySet()) {
-			String x = v + " <- [";
-			for (KEY c : invertedAdjacencyList.get(v)) {
-				x += c + ", ";
+        for (Map.Entry<K, ArrayList<K>> v : invertedAdjacencyList.entrySet()) {
+            StringBuilder x = new StringBuilder().append(v.getKey()).append(" <- [");
+            for (K c : v.getValue()) {
+                x.append(c).append(", ");
 			}
-			x += "]";
+            x.append("]");
 			sb.append(x);
 			sb.append("\n");
 		}
