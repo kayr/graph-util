@@ -1,8 +1,13 @@
 package com.softkiwi.algorithms.graphs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 
 public abstract class DirectedGraph<K, T extends VertexData<K>> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DirectedGraph.class);
 
     private Map<K, T> vertices = new LinkedHashMap<K, T>(); // vertex mapper
 
@@ -119,7 +124,7 @@ public abstract class DirectedGraph<K, T extends VertexData<K>> {
     private void visit(K fromId, K toId, Set<K> visited, boolean fromRoot, boolean failOnCycle) {
 		if (!isVisited(fromId)) {
 
-			System.out.println("Visiting [from:" + toId + " to:" + fromId + "] Parents: " + visited);
+			LOG.info("Visiting [from:{} to:{}] Parents: {}",toId,fromId,visited);
 
 			if (visited.contains(fromId)) {
 				if (failOnCycle)
