@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import java.util.Set;
+
 /**
  * Created by kay on 12/12/2016.
  */
@@ -108,6 +110,29 @@ public class DirectedGraphTest {
 		// sort nodes
 		assetSortString(graph, "a, b, c, d, ");
 
+	}
+
+	@Test
+	public void test_getParentFromCycle(){
+
+		DefaultGraph<Integer> graph = new DefaultGraph<Integer>();
+
+		graph.addVertex(new Node<Integer>(1),
+				new Node<Integer>(2),
+				new Node<Integer>(3),
+				new Node<Integer>(4),
+				new Node<Integer>(5));
+
+		graph.addEdge(1,2);
+		graph.addEdge(1,3);
+		graph.addEdge(2,4);
+		graph.addEdge(2,5);
+		graph.addEdge(3,5);
+		graph.addEdge(4,3);
+
+		Set<Integer> parent = graph.getParent(5);
+
+		assertArrayEquals(new Integer[]{2,1,3,4},parent.toArray(new Integer[0]));
 	}
 
 	private void assetSortString(DefaultGraph<String> graph, String expected) {
