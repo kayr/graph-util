@@ -1,17 +1,17 @@
 package com.softkiwi.algorithms.graphs;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 
-import java.util.Queue;
+import java.util.List;
 import java.util.Set;
+
+import static org.junit.Assert.*;
 
 /**
  * Created by kay on 12/12/2016.
  */
 
-public class DirectedGraphTest {
+public class DefaultDirectedGraphTest {
 
 	// create nodes
 	private Node<String> a = new Node<String>("a");
@@ -25,7 +25,7 @@ public class DirectedGraphTest {
 
 	@Test
 	public void test_SortShouldSortNodesNormally() {
-		DefaultGraph<String> graph = new DefaultGraph<String>();
+        DefaultDirectedGraph<String> graph = new DefaultDirectedGraph<String>();
 
 		// add to graph
 		graph.addVertex(a, b, c, d, e, f, x, y);
@@ -38,13 +38,13 @@ public class DirectedGraphTest {
 		graph.addEdge(e, f);
 
 		// sort nodes
-		assetSortString(graph, "a, x, b, c, d, f, e, y, ");
+        assetSortString(graph, a, x, b, c, d, f, e, y);
 	}
 
 	@Test
 	public void test_SortShouldDetectCyclicGraph() {
 
-		DefaultGraph<String> graph = new DefaultGraph<String>();
+        DefaultDirectedGraph<String> graph = new DefaultDirectedGraph<String>();
 
 		// add to graph
         graph.addVertex(a, b, d, c, x, e, y, f);
@@ -67,7 +67,7 @@ public class DirectedGraphTest {
 		assetThrowCycleException(graph);
 
         //sort silently
-        Queue<Node<String>> nodes = graph.sort(false);
+        List<Node<String>> nodes = graph.sort(false);
 
 
         System.out.println(nodes);
@@ -79,7 +79,7 @@ public class DirectedGraphTest {
 
     @Test
     public void test_sampleOfficeHierachy() {
-        DefaultGraph<Integer> graph = new DefaultGraph<Integer>();
+        DefaultDirectedGraph<Integer> graph = new DefaultDirectedGraph<Integer>();
 
         graph.addVertex(n(1), n(2), n(3), n(4), n(7), n(8), n(3), n(4), n(10), n(9));
 
@@ -101,7 +101,7 @@ public class DirectedGraphTest {
 
 	@Test
 	public void test_ShouldSortTransitiveDependencies() {
-		DefaultGraph<String> graph = new DefaultGraph<String>();
+        DefaultDirectedGraph<String> graph = new DefaultDirectedGraph<String>();
 
 		// Hierarchy Dependency
 		graph.addVertex(a, b, c, d);
@@ -114,12 +114,12 @@ public class DirectedGraphTest {
 		graph.addEdge(d, b);
 
 		// sort nodes
-		assetSortString(graph, "a, b, c, d, ");
+        assetSortString(graph, a, b, c, d);
 	}
 
 	@Test
 	public void test_ShouldDetectFullCycle() {
-		DefaultGraph<String> graph = new DefaultGraph<String>();
+        DefaultDirectedGraph<String> graph = new DefaultDirectedGraph<String>();
 
 		// Hierarchy Dependency
 		graph.addVertex(a, b, c, d);
@@ -135,29 +135,25 @@ public class DirectedGraphTest {
 
 	@Test
 	public void test_ShouldSortIndependentNodes() {
-		DefaultGraph<String> graph = new DefaultGraph<String>();
+        DefaultDirectedGraph<String> graph = new DefaultDirectedGraph<String>();
 
 		// Hierarchy Dependency
 		graph.addVertex(a, b, c, d);
 
 		// sort nodes
-		assetSortString(graph, "a, b, c, d, ");
+        assetSortString(graph, a, b, c, d);
 
 	}
 
 	@Test
 	public void test_getParentFromCycle(){
 
-		DefaultGraph<Integer> graph = new DefaultGraph<Integer>();
+        DefaultDirectedGraph<Integer> graph = new DefaultDirectedGraph<Integer>();
 
-		graph.addVertex(new Node<Integer>(1),
-				new Node<Integer>(2),
-				new Node<Integer>(3),
-				new Node<Integer>(4),
-				new Node<Integer>(5));
+        graph.addVertex(n(1), n(2), n(3), n(4), n(5));
 
-		graph.addEdge(1,2);
-		graph.addEdge(1,3);
+        graph.addEdge(1, 2);
+        graph.addEdge(1, 3);
 		graph.addEdge(2,4);
 		graph.addEdge(2,5);
 		graph.addEdge(3,5);
@@ -165,15 +161,43 @@ public class DirectedGraphTest {
 
 		Set<Integer> parent = graph.getParent(5);
 
+        graph.sort();
+
 		assertArrayEquals(new Integer[]{2,1,3,4},parent.toArray(new Integer[0]));
 	}
 
-	private void assetSortString(DefaultGraph<String> graph, String expected) {
-		graph.sort();
-		assertEquals(expected, graph.sortString());
-	}
+    @Test
+    public void test_Sort2() {
 
-	private void assetThrowCycleException(DefaultGraph<String> graph) {
+        DefaultDirectedGraph<Integer> graph = new DefaultDirectedGraph<Integer>();
+
+        Node<Integer> _1 = n(1);
+        Node<Integer> _2 = n(2);
+        Node<Integer> _3 = n(3);
+        Node<Integer> _4 = n(4);
+        Node<Integer> _5 = n(5);
+        Node<Integer> _0 = n(0);
+        graph.addVertex(_1, _2, _3, _4, _5, _0);
+
+        graph.addEdge(5, 2);
+        graph.addEdge(5, 0);
+        graph.addEdge(4, 0);
+        graph.addEdge(4, 1);
+        graph.addEdge(2, 3);
+        graph.addEdge(3, 1);
+
+        System.out.println(graph.toString());
+
+        assetSortString(graph, _0, _1, _4, _3, _2, _5);
+
+    }
+
+    private void assetSortString(DefaultDirectedGraph graph, Object... items) {
+        List sort = graph.sort();
+        assertArrayEquals(sort.toArray(), items);
+    }
+
+    private void assetThrowCycleException(DefaultDirectedGraph<String> graph) {
 		try {
 			graph.sort();
 			fail("Should have throw cyclic exception");
