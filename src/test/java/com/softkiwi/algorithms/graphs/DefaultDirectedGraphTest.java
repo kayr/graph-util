@@ -192,6 +192,27 @@ public class DefaultDirectedGraphTest {
 
     }
 
+    @Test
+    public void test_Sort3() {
+
+        DefaultDirectedGraph<Integer> graph = new DefaultDirectedGraph<Integer>();
+
+
+        graph.addVertex(1, 2, 3, 4, 5, 0);
+
+        graph.addEdge(5, 2);
+        graph.addEdge(5, 0);
+        graph.addEdge(4, 0);
+        graph.addEdge(4, 1);
+        graph.addEdge(2, 3);
+        graph.addEdge(3, 1);
+
+        System.out.println(graph.toString());
+
+        assertArrayEquals(graph.getSortedVertexIds().toArray(), new Integer[]{0, 1, 4, 3, 2, 5});
+
+    }
+
     private void assetSortString(DefaultDirectedGraph graph, Object... items) {
         List sort = graph.sort();
         assertArrayEquals(sort.toArray(), items);
