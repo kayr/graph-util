@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+//adapted from https://github.com/qbart/topological-sorting-directed-graph
 public abstract class AbstractDirectedGraph<K, T extends VertexData<K>> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AbstractDirectedGraph.class);
